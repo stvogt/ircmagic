@@ -1,10 +1,9 @@
 #! /usr/bin/python
 
 import sys, os
-sys.path.append('/home/stvogt/qtc/scripts')
-import operations as op
-import irc, chem_pot
+import irclib
 import singlePoint as sp
+import operations as op
 
 class Irc:
   def __init__(self, outfile):
@@ -12,14 +11,14 @@ class Irc:
     self.lines = op.read_lines(outfile)
 
   def rxCoord(self):
-    rx_coord = chem_pot.get_rxCoord(self.lines)  
+    rx_coord = irclib.get_rxCoord(self.lines)  
     return rx_coord
 
   def atoms(self):
     return sp.get_xyz(self.lines)[0]
 
   def energy(self):
-    energy = chem_pot.all_energies(self.lines)
+    energy = irclib.all_energies(self.lines)
     return {"Reaction Coordinate": self.rxCoord(), "Energy":energy}
 
   def force(self):
@@ -28,6 +27,7 @@ class Irc:
     return {"Reaction Coordinate":coord , "Reaction Force":force}
 
   def ReactionWorks(self):
+    # in symmetric reactions the correct works are obtained when using i + 1 in w3_cut, not sure why
     y = self.force()["Reaction Force"]
     x = self.force()["Reaction Coordinate"]
     max_force = max(y)
@@ -36,22 +36,23 @@ class Irc:
     for i in range(0,len(y)):
       if y[i] == min_force:
         w1_cut = i
-        w1_rxcoord = x[i]
+        w1_rxcoord = x[w1_cut]
       elif y[i] == max_force:
-        w3_cut = i+1
-        w3_rxcoord = x[i+1]
+        w3_cut = i
+        w3_rxcoord = x[w3_cut]
 
     for i in range(0,len(y)):
       if y[i] > 0.0:
-        w2_cut = i
+        w2_cut = i-1
+        w2_rxcoord = x[w2_cut]
         break
 
-    w1_y = y[:w1_cut]
-    w1_x = x[:w1_cut]
-    w2_y = y[w1_cut:w2_cut]
-    w2_x = x[w1_cut:w2_cut]
-    w3_y = y[w2_cut:w3_cut]
-    w3_x = x[w2_cut:w3_cut]
+    w1_y = y[:w1_cut+1]
+    w1_x = x[:w1_cut+1]
+    w2_y = y[w1_cut:w2_cut+1]
+    w2_x = x[w1_cut:w2_cut+1]
+    w3_y = y[w2_cut:w3_cut+1]
+    w3_x = x[w2_cut:w3_cut+1]
     w4_y = y[w3_cut:]
     w4_x = x[w3_cut:]
 
@@ -65,21 +66,36 @@ class Irc:
     print "----Distances---"
     sigma = []
     Sigma = {}
-    all_dis = chem_pot.all_distances(self.lines)
+    all_dis = irclib.all_distances(self.lines)
     num_dist = len(all_dis[0][0])
     Sigma["Reaction Coordinate"] = self.rxCoord()
     for j in range(0, num_dist):
       for coord in range(0,len(all_dis)):
         sigma.append(all_dis[coord][1][j])
       Sigma[all_dis[0][0][j]] = sigma
-      #print all_dis[0][0][j]
+      print all_dis[0][0][j]
+      sigma = []
+    return Sigma
+
+  def angles(self):
+    print "----Angles---"
+    sigma = []
+    Sigma = {}
+    all_angles = irclib.all_angles(self.lines)
+    num_ang = len(all_angles[0][0])
+    Sigma["Reaction Coordinate"] = self.rxCoord()
+    for j in range(0, num_ang):
+      for coord in range(0,len(all_angles)):
+        sigma.append(all_angles[coord][1][j])
+      Sigma[all_angles[0][0][j]] = sigma
+      print all_angles[0][0][j]
       sigma = []
     return Sigma
 
   def bondOrders(self):
     Bndo = {}
     bndo_list = []
-    bondOrder =  chem_pot.all_bondOrders(self.lines)
+    bondOrder =  irclib.all_bondOrders(self.lines)
     rx_coord = self.rxCoord()
     Bndo["Reaction Coordinate"] = rx_coord
     print "----------- Bonds ----------"
@@ -95,7 +111,7 @@ class Irc:
   def natCharges(self):
     Charges = {}
     charges_list = []
-    charges =  chem_pot.all_NatCharges(self.lines)
+    charges =  irclib.all_NatCharges(self.lines)
     rx_coord = self.rxCoord()
     Charges["Reaction Coordinate"] = rx_coord
     print "------------Charges-------------"
@@ -109,10 +125,10 @@ class Irc:
     return Charges
 
   def bondOrbital(self):
-    chem_pot.all_bondOrbitals(self.lines)
+    irclib.all_bondOrbitals(self.lines)
 
   def occ_orbtitals(self):
-    all_orbs = chem_pot.all_orbs(self.lines)
+    all_orbs = irclib.all_orbs(self.lines)
     val_orbs = op.num_valence_orbs(self.atoms())
     epsilon = []
     Epsilon = {}
@@ -128,7 +144,7 @@ class Irc:
     return Epsilon
 
   def virt_orbtitals(self):
-    all_orbs = chem_pot.all_orbs(self.lines)
+    all_orbs = irclib.all_orbs(self.lines)
     val_orbs = op.num_valence_orbs(self.atoms())
     epsilon = []
     Epsilon = {}
@@ -144,7 +160,7 @@ class Irc:
     return Epsilon
 
   def all_orbtitals(self):
-    all_orbs = chem_pot.all_orbs(self.lines)
+    all_orbs = irclib.all_orbs(self.lines)
     epsilon = []
     Epsilon = {}
     num_orbs = len(all_orbs[0][2])
@@ -158,7 +174,7 @@ class Irc:
     return Epsilon
 
   def chemPotKoopman(self):
-    chemPot = chem_pot.koopman(self.lines)
+    chemPot = irclib.koopman(self.lines)
     return {"Reaction Coordinate": self.rxCoord(), "Chemical Potential":chemPot}
 
   def flux(self, chemPot):
@@ -179,22 +195,23 @@ class Irc:
       
   def IP(self, outfile_cat):
     cat_lines = op.read_lines(outfile_cat)
-    ip = chem_pot.get_IP(self.lines,cat_lines)
+    ip = irclib.get_IP(self.lines,cat_lines)
     return {"Reaction Coordinate": self.rxCoord(), "IP":ip}
     
   def EA(self, outfile_an):
     an_lines = op.read_lines(outfile_an)
-    ea = chem_pot.get_EA(self.lines,an_lines)
+    ea = irclib.get_EA(self.lines,an_lines)
     return {"Reaction Coordinate": self.rxCoord(), "EA":ea}
 
   def chemPotFinitDiff(self,ip, ea):
-    chemPotFD = chem_pot.finite_diff(ip['IP'], ea['EA'])
+    chemPotFD = irclib.finite_diff(ip['IP'], ea['EA'])
     return {"Reaction Coordinate": self.rxCoord(), "Chemical Potential":chemPotFD}
 
   def simplePlot(self,x,y):
     return op.simple_plot(x,y)
 
   def savePlot(self,plotname, ylabel, zeroline=False, Show=True, **kwargs):
+    print "I am using this IrcMagic class!!!!!"
     if not os.path.isdir("figures"):
       os.makedirs("figures")
     os.chdir("figures")
@@ -224,7 +241,7 @@ class Irc:
     op.general_print(filename, **kwargs)
     os.chdir("../")
 
-  def generate_cube_file(self,orb_range,sum_orbs=False):
+  def generate_cube_file(self,orb_range):
     atom_list = self.atoms()
-    op.cube_files(orb_range,atom_list,sum_orbs)
+    op.cube_files(orb_range,atom_list)
 

@@ -61,8 +61,8 @@ def integrate(x_coord, y_coord):
   fy_coord = map(float, y_coord)
   x = np.array(fx_coord)
   y = np.array(fy_coord)
-  work = simps(y, x)
-  #work = np.trapz(y, x)
+  #work = simps(y, x)
+  work = np.trapz(y, x)
   return work
 
 def unique(List):
@@ -133,6 +133,7 @@ def num_valence_orbs(atom_list):
 def general_plot(plotname, ylabel, works, Zeroline, Show, **kwargs):
   bullets = ['bo',  'rs', 'k^', 'g-', 'm-.','bo',  'rs', 'k^', 'g-', 'm-.']
   count = 0
+  print "I am using this operation.py"
   for key in kwargs:
     if key == "Reaction Coordinate":
       x = kwargs[key]
@@ -260,15 +261,13 @@ def render_image(cubefile,jmolfile):
   if not os.path.isdir("orb_images"):
     os.makedirs("orb_images")
   os.chdir("orb_images")
-  #print os.getcwd()
-  #input0 = "jmol -n -s ../jmol.spt"
-  input0 = "jmol ../jmol.spt -n" 
+  input0 = "/home/stvogt/.jmol/jmol.sh -n -s ../jmol.spt"
   print os.getcwd()
-  #print input0
+  print input0
   job0 = commands.getstatusoutput(input0)
   os.chdir('../')
 
-def generate_cubes(orbitals,fchk,cube_output,sum_orbs):
+def generate_cubes(orbitals,fchk,cube_output):
   count = 0
   for i in orbitals: 
     print "Genrating cube for orbital number: "+str(i)
@@ -276,41 +275,39 @@ def generate_cubes(orbitals,fchk,cube_output,sum_orbs):
     input1="cubegen 0 MO="+str(i)+" "+fchk+" "+cub_i+" 0 h" 
     job1 = commands.getstatusoutput(input1)
     cubman.sq_cube(cub_i)
-    #print input1
-    #os.system("ulimit -s unlimited")
-    #print job1
-    if sum_orbs:
-      cub0 = "sum_of_all_cubes_"+cube_output
-      if count == 0:
-        print "Generating the cube of the sum accumulation"
-        input2="cubegen 0 MO="+str(i)+" "+fchk+" "+cub0+" 0 h" 
-        job2 = commands.getstatusoutput(input2)
-        cubman.sq_cube(cub0)
-        print input2
-      else:
-        print "Summing cubes "+cub0+" with "+cub_i
-        cubman.sum_total(cub0+"_sq", cub_i+"_sq")
-      count = count +1
+    print input1
+    os.system("ulimit -s unlimited")
+    print job1
 
-def cube_files(orb_range, atom_list, sum_orbs):
+    #if sum_orbs:
+    #  cub0 = "sum_of_all_cubes_"+cube_output
+    #  if count == 0:
+    #    print "Generating the cube of the sum accumulation"
+    #    input2="cubegen 0 MO="+str(i)+" "+fchk+" "+cub0+" 0 h" 
+    #    job2 = commands.getstatusoutput(input2)
+    #    cubman.sq_cube(cub0)
+    #    print input2
+    #  else:
+    #    print "Summing cubes "+cub0+" with "+cub_i
+    #    cubman.sum_total(cub0+"_sq", cub_i+"_sq")
+    #  count = count +1
+
+def cube_files(orb_range, atom_list):
   if os.path.isdir("CHK"):
     f = open("cube.log", "w")
     f.write("Log file for cube generation\n\n")
-    if not os.path.isdir("orbitals"):
-      os.makedirs("orbitals")
+    if not os.path.isdir("cubes"):
+      os.makedirs("cubes")
     for file_ in os.listdir("CHK"):
       print "generating checkpoint file for:  "+file_
       input0 = "formchk "+"CHK/"+file_ 
       print input0
       job0 = commands.getstatusoutput(input0)
-      os.chdir("orbitals")
+      os.chdir("cubes")
       print "Entering this directory --> "+os.getcwd()
       fchk = "../CHK/"+file_.split('.')[0]+".fchk"
       cube_output = file_.split(".")[0]+".cub"
-      if len(orb_range) == num_valence_orbs(atom_list):
-      #if orb_range == "valence"
-        sum_orbs = True
-      generate_cubes(orb_range,fchk,cube_output,sum_orbs)
+      generate_cubes(orb_range,fchk,cube_output)
       print "ordering orbital cubes into directories"
       for i in orb_range: 
         if not os.path.isdir("orbitals_"+str(i)):
@@ -323,21 +320,22 @@ def cube_files(orb_range, atom_list, sum_orbs):
         else:
           print "Cube file "+original+" not found, please check your checkpoint file"
           f.write("Cube file "+original+" not found, please check your checkpoint file\n")
-        render_image(destiny,"/home/stvogt/bin/jmol.scripts")
+        #render_image(destiny,"/home/stvogt/bin/jmol.scripts")
         os.chdir("../")
-      if sum_orbs:
-        if not os.path.isdir("orb_sum"):
-          os.makedirs("orb_sum")
-        os.chdir("orb_sum")
-        original = "../sum_of_all_cubes_"+cube_output+"_sq"
-        destiny  = "sum_of_all_cubes_"+cube_output
-        if os.path.isfile(original):
-          shutil.move(original, destiny)
-        else:
-          print "Cube file "+original+" not found, please check!"
-          f.write("Cube file "+original+" not found, please check!\n")
-        render_image(destiny,"/home/stvogt/bin/jmol.scripts")
-        os.chdir("../")
+      #if sum_orbs:
+      #  if not os.path.isdir("orb_sum"):
+      #    os.makedirs("orb_sum")
+      #  os.chdir("orb_sum")
+      #  original = "../sum_of_all_cubes_"+cube_output+"_sq"
+      #  destiny  = "sum_of_all_cubes_"+cube_output
+      #  if os.path.isfile(original):
+      #    shutil.move(original, destiny)
+      #  else:
+      #    print "Cube file "+original+" not found, please check!"
+      #    f.write("Cube file "+original+" not found, please check!\n")
+      #  render_image(destiny,"/home/stvogt/bin/jmol.scripts")
+      #  os.chdir("../")
+      os.system("rm *.cub")
       os.chdir("../")
     f.close()  
 
@@ -345,9 +343,8 @@ def cube_files(orb_range, atom_list, sum_orbs):
     print "No checkpoint folder CHK!"
     sys.exit(1)
 
-def valence_density():
-  pass
-
+#def valence_density():
+#  pass
 
 #def general_plot(plotname, ylabel, works, zeroline=False, blocks = 3, **kwargs):
 #  count = 0

@@ -1,6 +1,4 @@
 import sys,re,math
-sys.path.append("/home/stvogt/qtc/scritps/irc")
-import irc
 import operations as op
 
 def process_occ_energies(occ_energies):
@@ -74,9 +72,14 @@ def bonddistance(xyz):
         bondDistance.append(math.sqrt((float(xCoord[i])-float(xCoord[j]))**2 + (float(yCoord[i])-float(yCoord[j]))**2 + (float(zCoord[i])-float(zCoord[j]))**2))
   return(bondLabel,bondDistance)
 
-def angles(atomLabel,xCoord,yCoord,zCoord):
+def angles(xyz):
   angleLabel = []
   angle = []
+  atomLabel = op.atom_label(xyz[0])
+  xCoord = xyz[1]
+  yCoord = xyz[2]
+  zCoord = xyz[3]
+
   for i in range(0,len(atomLabel)-1):
     for j in range(i, len(atomLabel)):
       for k in range(0, len(atomLabel)):
@@ -147,13 +150,13 @@ def get_last_xyz(lines):
   y_coords = []
   z_coords = []
   for lineNum in range(0,len(lines)):
+    #if "Input orientation:" in lines[lineNum]:  
     if "Standard orientation:" in lines[lineNum]:  
       xyz = []
       atoms_num = []
       x_coords = []
       y_coords = []
       z_coords = []
-      print lineNum
       for lineNum1 in range(lineNum+5,len(lines)):
         p = re.search('\d+\s*-?\d+.\d+\s*-?\d+.\d+', str(lines[lineNum1]))
         if p: 
@@ -196,4 +199,26 @@ def get_orb_symm(lines):
   return symmetries
 
 def get_level_of_theory(lines):
-  pass
+  for lineNum in range(0,len(lines)):
+    if "#P" in lines[lineNum]:
+      theory = lines[lineNum].split()[1].split("/")[0]    
+      return theory
+  print "No level of theory found"
+
+def get_basis(lines):
+  for lineNum in range(0,len(lines)):
+      if "Standard basis:" in lines[lineNum]:
+        basis = lines[lineNum].split()[2]    
+  return basis
+
+def get_charge(lines):
+  for lineNum in range(0,len(lines)):
+      if "Charge =" in lines[lineNum]:
+        charge = lines[lineNum].split()[2]    
+  return charge
+
+def get_multiplicity(lines):
+  for lineNum in range(0,len(lines)):
+      if "Multiplicity =" in lines[lineNum]:
+        multi = lines[lineNum].split()[5]    
+  return multi
