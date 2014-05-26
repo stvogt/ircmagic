@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import simps
 from scipy.integrate import cumtrapz
-sys.path.append("/home/stvogt/bin")
 import cubman
 
 header =  '''
