@@ -198,6 +198,7 @@ def get_orb_symm(lines):
       break
   return symmetries
 
+# make it work for level of theory on any place of that line
 def get_level_of_theory(lines):
   for lineNum in range(0,len(lines)):
     if "#P" in lines[lineNum]:
