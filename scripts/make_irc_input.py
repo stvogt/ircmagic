@@ -44,8 +44,6 @@ if not os.path.isdir(irc_folder):
 os.chdir(irc_folder)
 inputfile = "input_"+dirrection.split()[0]+".dat"
 
-print "Creating input file in "+irc_folder+"/"+inputfile
-
 f = open(inputfile,"w")
 f.write("%Nproc="+proc_num+"\n")
 f.write("%Mem="+mem_num+"\n")

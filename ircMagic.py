@@ -27,9 +27,14 @@ class Irc:
     return {"Reaction Coordinate":coord , "Reaction Force":force}
 
   def ReactionWorks(self):
-    # in symmetric reactions the correct works are obtained when using i + 1 in w3_cut, not sure why
-    y = self.force()["Reaction Force"]
-    x = self.force()["Reaction Coordinate"]
+    y_in = self.force()["Reaction Force"]
+    x_in = self.force()["Reaction Coordinate"]
+    if float(x_in[0]) > 0:
+      x = x_in[::-1] 
+      y = y_in[::-1] 
+    else: 
+      x = x_in 
+      y = y_in 
     max_force = max(y)
     min_force = min(y)
 
@@ -49,17 +54,17 @@ class Irc:
 
     w1_y = y[:w1_cut+1]
     w1_x = x[:w1_cut+1]
-    w2_y = y[w1_cut:w2_cut+1]
+    w2_y = y[w1_cut:w2_cut+1] ## Due to python list handling
     w2_x = x[w1_cut:w2_cut+1]
     w3_y = y[w2_cut:w3_cut+1]
     w3_x = x[w2_cut:w3_cut+1]
     w4_y = y[w3_cut:]
     w4_x = x[w3_cut:]
 
-    w1 = round(op.integrate(w1_x,w1_y),2)
-    w2 = round(op.integrate(w2_x,w2_y),2)
-    w3 = round(op.integrate(w3_x,w3_y),2)
-    w4 = round(op.integrate(w4_x,w4_y),2)
+    w1 = round(-1.0*(op.integrate(w1_x,w1_y)),2)
+    w2 = round(-1.0*(op.integrate(w2_x,w2_y)),2)
+    w3 = round(-1.0*(op.integrate(w3_x,w3_y)),2)
+    w4 = round(-1.0*(op.integrate(w4_x,w4_y)),2)
     return (w1,w2,w3,w4,w1_rxcoord,w3_rxcoord)
 
   def distances(self):
