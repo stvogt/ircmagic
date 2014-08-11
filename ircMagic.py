@@ -1,13 +1,15 @@
 #! /usr/bin/python
 
-import sys, os
+import sys, os, glob
 import irclib
 import singlePoint as sp
 import operations as op
+from pyDensity import Density
 
 class Irc:
   def __init__(self, outfile):
     self.outfile = outfile
+    self.outpath = os.path.abspath(outfile)
     self.lines = op.read_lines(outfile)
 
   def rxCoord(self):
@@ -46,7 +48,7 @@ class Irc:
         w3_cut = i
         w3_rxcoord = x[w3_cut]
 
-    for i in range(0,len(y)):
+    for i in range(5,len(y)):
       if y[i] > 0.0:
         w2_cut = i-1
         w2_rxcoord = x[w2_cut]
@@ -178,9 +180,30 @@ class Irc:
       epsilon = []
     return Epsilon
 
+  def symm_orbitals(self):
+      symm_orbs_all = irclib.all_symm_orbs_energ(self.lines)[0]
+      symm_orbs_occ = sp.get_symm_orbs(self.lines)[0]
+      symm_orbs_virt = sp.get_symm_orbs(self.lines)[1]
+      print "\nSymmetries of occupied orbitals:"
+      for key in sorted(symm_orbs_occ.iterkeys()):
+          print str(key) +":  "+ symm_orbs_occ[key]
+      count = 0
+      print "\nSymmetries of occupied orbitals:"
+      for key in sorted(symm_orbs_virt.iterkeys()):
+          print str(key) +":  "+ symm_orbs_virt[key]
+          count = count +1
+          if count == 5:
+              break
+      print "###########################################"
+      symm_orbs_all["Reaction Coordinate"] = self.rxCoord()
+      return symm_orbs_all
+
   def chemPotKoopman(self):
     chemPot = irclib.koopman(self.lines)
     return {"Reaction Coordinate": self.rxCoord(), "Chemical Potential":chemPot}
+
+  def chemPotGeneral(self,orbOcc,orbVirt)
+    pass
 
   def flux(self, chemPot):
     coord = op.neg_derivative(self.rxCoord(),chemPot['Chemical Potential'])[0]
@@ -249,4 +272,18 @@ class Irc:
   def generate_cube_file(self,orb_range):
     atom_list = self.atoms()
     op.cube_files(orb_range,atom_list)
+
+  def dual(self):
+    if not os.path.isdir("density"):
+        os.makedirs("density")
+    op.fchk_gen("CHK")
+    for file_ in glob.glob("CHK/*.fchk"):
+        density =  Density(self.outfile, file_)
+        os.chdir("density")
+        density.dualFMOA()
+        destiny  = "dualFMOA_"+file_.split("_")[1].split(".")[0]+".cub"
+        print destiny
+        os.system("mv dualFMOA/dualFMOA.cub dualFMOA/"+destiny)
+        os.chdir("../")
+
 

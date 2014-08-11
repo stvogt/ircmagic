@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import simps
 from scipy.integrate import cumtrapz
+sys.path.append("/home/stvogt/bin")
 import cubman
 
 header =  '''
@@ -60,8 +61,8 @@ def integrate(x_coord, y_coord):
   fy_coord = map(float, y_coord)
   x = np.array(fx_coord)
   y = np.array(fy_coord)
-  #work = simps(y, x)
-  work = np.trapz(y, x)
+  work = simps(y, x)
+  #work = np.trapz(y, x)
   return work
 
 def unique(List):
@@ -266,30 +267,25 @@ def render_image(cubefile,jmolfile):
   job0 = commands.getstatusoutput(input0)
   os.chdir('../')
 
-def generate_cubes(orbitals,fchk,cube_output):
-  count = 0
-  for i in orbitals: 
-    print "Genrating cube for orbital number: "+str(i)
-    cub_i = "orbitals_"+str(i)+"_"+cube_output
-    input1="cubegen 0 MO="+str(i)+" "+fchk+" "+cub_i+" 0 h" 
-    job1 = commands.getstatusoutput(input1)
-    cubman.sq_cube(cub_i)
-    print input1
-    os.system("ulimit -s unlimited")
-    print job1
+#def generate_cube(orbital,fchk,cube_output,sq=False):
+#  cub = "orbital_"+str(orbital)+"_"+cube_output
+#  input1="cubegen 0 MO="+str(orbital)+" "+fchk+" "+cub+" 0 h" 
+#  print input1
+#  job1 = commands.getstatusoutput(input1)
+#  if sq:
+#    sq_cub = cubman.sq_cube(cub)
+#    os.system("rm "+cub)
+#    return sq_cub
+#  else:
+#    return cub
+#
 
-    #if sum_orbs:
-    #  cub0 = "sum_of_all_cubes_"+cube_output
-    #  if count == 0:
-    #    print "Generating the cube of the sum accumulation"
-    #    input2="cubegen 0 MO="+str(i)+" "+fchk+" "+cub0+" 0 h" 
-    #    job2 = commands.getstatusoutput(input2)
-    #    cubman.sq_cube(cub0)
-    #    print input2
-    #  else:
-    #    print "Summing cubes "+cub0+" with "+cub_i
-    #    cubman.sum_total(cub0+"_sq", cub_i+"_sq")
-    #  count = count +1
+def fchk_gen(chk_folder):
+    for file_ in os.listdir(chk_folder):
+      print "Generating formated checkpoint file for:  "+file_
+      input0 = "formchk "+chk_folder+'/'+file_ 
+      print input0
+      job0 = commands.getstatusoutput(input0)
 
 def cube_files(orb_range, atom_list):
   if os.path.isdir("CHK"):
@@ -297,6 +293,7 @@ def cube_files(orb_range, atom_list):
     f.write("Log file for cube generation\n\n")
     if not os.path.isdir("cubes"):
       os.makedirs("cubes")
+    #fchk_gen("CHK/")
     for file_ in os.listdir("CHK"):
       print "generating checkpoint file for:  "+file_
       input0 = "formchk "+"CHK/"+file_ 
@@ -341,6 +338,36 @@ def cube_files(orb_range, atom_list):
   else:
     print "No checkpoint folder CHK!"
     sys.exit(1)
+#
+#def generate_cubes(orbitals,fchk,cube_output,sq=False):
+#  count = 0
+#  orb_names = []
+#  for i in orbitals: 
+#		print "Genrating cube for orbital number: "+str(i)
+#		cub_i = "orbitals_"+str(i)+"_"+cube_output
+#		orb_name.append(cub_i)
+#		input1="cubegen 0 MO="+str(i)+" "+fchk+" "+cub_i+" 0 h" 
+#		print input1
+#		job1 = commands.getstatusoutput(input1)
+#	#	if sq:
+#	#		sq_cub = cubman.sq_cube(cub_i)
+#	#		os.system("rm "+cub_i)
+#    #os.system("ulimit -s unlimited")
+    #print job1
+
+    #if sum_orbs:
+    #  cub0 = "sum_of_all_cubes_"+cube_output
+    #  if count == 0:
+    #    print "Generating the cube of the sum accumulation"
+    #    input2="cubegen 0 MO="+str(i)+" "+fchk+" "+cub0+" 0 h" 
+    #    job2 = commands.getstatusoutput(input2)
+    #    cubman.sq_cube(cub0)
+    #    print input2
+    #  else:
+    #    print "Summing cubes "+cub0+" with "+cub_i
+    #    cubman.sum_total(cub0+"_sq", cub_i+"_sq")
+    #  count = count +1
+
 
 #def valence_density():
 #  pass

@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import sys
+import commands, os
 
 def sq_cube(cubefile):
 
@@ -31,6 +32,7 @@ def sq_cube(cubefile):
       f.write(' '+str(vol_sq_formated)+' ')
     f.write('\n')
   f.close()
+  return cubefile+"_sq"
 
 def mult_cube(cubefile, factor):
 
@@ -62,6 +64,7 @@ def mult_cube(cubefile, factor):
       f.write(' '+str(vol_mult_formated)+' ')
     f.write('\n')
   f.close()
+  return cubefile+"_mult"
 
 def sum_cube(cub1,cub2):
   f = open(cub1, 'r')
@@ -131,6 +134,7 @@ def sum_total(cub1,cub2):
       f.write(' '+str(vol_add_formated)+' ')
     f.write('\n')
   f.close()
+  return cub1
 
 def substract_cube(cub1,cub2):
   f = open(cub1, 'r')
@@ -165,7 +169,20 @@ def substract_cube(cub1,cub2):
       f.write(' '+str(vol_add_formated)+' ')
     f.write('\n')
   f.close()
+  return cub1+cub2+".sub"
 
-#fplus=sys.argv[1]
-#fminus=sys.argv[2]
-#substract_cube(fplus,fminus)
+def generate_cube(orbital,fchk,cube_output,sq=False):
+  cub = "orbital_"+str(orbital)+"_"+cube_output
+  input1="cubegen 0 MO="+str(orbital)+" "+fchk+" "+cub+" 0 h" 
+  print input1
+  job1 = commands.getstatusoutput(input1)
+  if sq:
+    sq_cub = sq_cube(cub)
+    os.system("rm "+cub)
+    return sq_cub
+  else:
+    return cub
+
+#Homo=sys.argv[1]
+#Lumo=sys.argv[2]
+#substract_cube(Lumo,Homo)

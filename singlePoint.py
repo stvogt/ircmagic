@@ -178,27 +178,53 @@ def get_last_xyz(lines):
           break
   return xyz
 
-def get_orb_symm(lines):
-  symmetries = []
-  found = False
-  for lineNum in range(0,len(lines)):
-    if "Population analysis using the SCF density." in lines[Nline]:
-      found = True
-      for lineNum1 in range(lineNum+4,len(lines)):
-        linelist=lines[lineNum1].split()
-        if not Virtual in lines[lineNum1]: 
-          if "Occupied" in lines[lineNum1]:
-            for lineitem in range(1,len(linelist)):
-              symmetries.append(lineitem.strip(')').strip('('))
-          else:
-            for lineitem in range(0,len(linelist)):
-              symmetries.append(lineitem.strip(')').strip('('))
+def get_symm_orbs(lines):
+    for lineNum in range(0,len(lines)):
+        line = lines[lineNum]
+        if "Orbital symmetries:" in line:
+            occ_symm = []
+            virt_symm = []
+            Occ_dict = {}
+            Virt_dict = {}
+            countOrbs = 1
+            for lineNum1 in range(lineNum,len(lines)): # First the occupied...
+                if "Virtual" in lines[lineNum1]:
+                    virtlineNum = lineNum1
+                    break
+                lineList = lines[lineNum1].split()
+                for item in lineList:
+                    if "(" in item:
+                        orb_symm =item.split("(")[1].split(")")[0]
+                        occ_symm.append(orb_symm)
+                        Occ_dict[countOrbs] = orb_symm
+                        countOrbs = countOrbs + 1
+            for lineNum1 in range(virtlineNum,len(lines)):  # Now the virtual orbitals
+                if "The electronic state is " in lines[lineNum1]:
+                    break
+                lineList = lines[lineNum1].split()
+                for item in lineList:
+                    if "(" in item:
+                        orb_symm =item.split("(")[1].split(")")[0]
+                        virt_symm.append(orb_symm)
+                        Virt_dict[countOrbs] = orb_symm 
+                        countOrbs = countOrbs + 1
+            # Assigning numbers to each symmetry orbital 
+            Occ_dict_num = {}
+            Virt_dict_num = {}
+            symm_groups = list(set(occ_symm))
 
-    elif found:
-      break
-  return symmetries
+            for group in symm_groups:
+                count = 1
+                for key in Occ_dict.iterkeys():
+                   if group == Occ_dict[key]:
+                       Occ_dict_num[key] = str(count)+Occ_dict[key]
+                       count = count + 1
+                for key in Virt_dict.iterkeys():
+                   if group == Virt_dict[key]:
+                       Virt_dict_num[key] = str(count)+Virt_dict[key]
+                       count = count + 1
+    return (Occ_dict_num, Virt_dict_num)
 
-# make it work for level of theory on any place of that line
 def get_level_of_theory(lines):
   for lineNum in range(0,len(lines)):
     if "#P" in lines[lineNum]:
