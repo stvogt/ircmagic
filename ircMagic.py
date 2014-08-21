@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import sys, os, glob
+import sys, os, glob, random
 import irclib
 import singlePoint as sp
 import operations as op
@@ -202,8 +202,65 @@ class Irc:
     chemPot = irclib.koopman(self.lines)
     return {"Reaction Coordinate": self.rxCoord(), "Chemical Potential":chemPot}
 
-  def chemPotGeneral(self,orbOcc,orbVirt)
+  def chemPotGeneral(self,orbOcc,orbVirt):
+    chemPotGen = []
+    orbs = irclib.all_symm_orbs_energ(self.lines)[0]
+    orbOcc_enrg = orbs[orbOcc]
+    orbVirt_energ= orbs[orbVirt]
+    for i in range(0,len(orbOcc_enrg)):
+        mu = -0.5*(float(orbOcc_enrg[i]) + float(orbVirt_energ[i]))*627.5095
+        chemPotGen.append(mu)
+    return {"Reaction Coordinate": self.rxCoord(), "Chemical Potential":chemPotGen}
+
+  def chemPotSymm(self):
     pass
+    orbs = irclib.all_symm_orbs_energ(self.lines)[0]
+    occ_orbs = irclib.all_symm_orbs_energ(self.lines)[1]
+    virt_orbs = irclib.all_symm_orbs_energ(self.lines)[2]
+    chiplus=[]
+    chiminus=[]
+    denvirt=0.0
+    denocc=0.0
+    mu_virt = 0.0
+    mu_virt_list = []
+    start = len(occ_orbs)
+    # Computation of Chi plus
+    for j in range(start,len(random.choice(orbs.values()))):
+        chiplus=[]
+        denvirt=0.0
+        for key in virt_orbs.iterkeys():
+            ek_ej = float(virt_orbs["41A'"][j])-float(orbs[key][j])
+            denvirt= denvirt + ek_ej
+    # Compute the division to get total chiplus
+        for key in sorted(virt_orbs.iterkeys()):
+            chiplus_j=(float(orbs["41A'"][j])-float(orbs[key][j]))/denvirt
+            chiplus.append(chiplus_j)
+            mu_virt = mu_virt + chiplus_j*float(orbs[key][j]) 
+            print key + ":   "+str(mu_virt) + " =   "+ orbs[key][j] + "*"+str(chiplus_j)
+
+        mu_virt_list.append(mu_virt)
+        print mu_virt_list
+        sys.exit(1)
+
+
+    #Compute Chi minus:
+    for i in range(0,len(random.choice(occ_orbs.values()))):
+        denocc=0.0
+        chiminus=[]
+        for key in occ_orbs.iterkeys():
+            denocc=denocc+float(occ_orbs[key][j])-float(occ_orbs[key][0])
+        print denocc
+    # Compute the division to get total chiminus
+        for i in range(0,len(random.choice(occ_orbs.values()))):
+            for key in occ_orbs.iterkeys():
+                chiminus_i = (float(occ_orbs[key][i])-float(occ_orbs[key][0]))/denocc
+                chiminus.append(chiminus_i)
+        print chiminus
+        break
+
+
+        
+
 
   def flux(self, chemPot):
     coord = op.neg_derivative(self.rxCoord(),chemPot['Chemical Potential'])[0]

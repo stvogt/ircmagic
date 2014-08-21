@@ -66,6 +66,37 @@ def all_orbs(lines):
     all_orbs.append(sp.get_orbitals(blocks[blockNum]))
   return all_orbs
 
+def all_symm_orbs_energ(lines):
+    occ_energ_symm = {}
+    virt_energ_symm = {}
+    blocks = get_blocks(lines)
+    for blockNum in range(0,len(blocks)):
+        # Get the dictcionary with the number of orbitals and respective symmetries
+        Occ_dict_num = sp.get_symm_orbs(blocks[blockNum])[0]
+        Virt_dict_num = sp.get_symm_orbs(blocks[blockNum])[1]
+        #Get the orbital energies:
+        occ_energ = sp.get_orbitals(blocks[blockNum])[0]
+        virt_energ = sp.get_orbitals(blocks[blockNum])[1]
+        all_orbs = sp.get_orbitals(blocks[blockNum])[2]
+        #In the first block initialize the symm_orbital dictcionary
+        if blockNum == 0:
+            for itemNum in range(1,len(occ_energ)+1):
+                symm = Occ_dict_num[itemNum]
+                occ_energ_symm[symm] = []
+            for itemNum in range(len(occ_energ)+1, len(all_orbs)+1):
+                symm = Virt_dict_num[itemNum]
+                virt_energ_symm[symm] = []
+        # Appending the orbital energies of that point in the IRC with the orbtial enengies 
+        for itemNum in range(1,len(occ_energ)+1):
+            symm = str(Occ_dict_num[itemNum])
+            occ_energ_symm[symm].append(occ_energ[itemNum-1])
+        for itemNum in range(len(occ_energ)+1, len(all_orbs)+1):
+            #print itemNum
+            symm = str(Virt_dict_num[itemNum])
+            virt_energ_symm[symm].append(virt_energ[itemNum-len(occ_energ)-1])
+    all_energ_symm = dict(occ_energ_symm.items() + virt_energ_symm.items())        
+    return(all_energ_symm, occ_energ_symm, virt_energ_symm)
+
 def all_distances(lines):
   all_dist = []
   blocks = get_blocks(lines)
@@ -100,7 +131,6 @@ def all_NatCharges(lines):
     all_charges.append(charges)
   return all_charges
 
-
 def all_bondOrbitals(lines):
   orbs = []
   blocks = get_blocks(lines)
@@ -119,13 +149,12 @@ def koopman(lines):
   orbs = all_orbs(lines)
   Mu = []
   
-  # The first index are the points along the IRC, in the second index, 0 is occupied, 1 is virtual, and the thrid index are the individual orbitals
+  #The first index are the points along the IRC, in the second index, 0 is occupied, 1 is virtual, and the thrid index are the individual orbitals
   for i in range(0,len(orbs)):
     homo = float(orbs[i][0][-1])
     lumo = float(orbs[i][1][0])
     mu = -0.5*(homo + lumo)*627.509469
     Mu.append(mu)
-
   return Mu
 
 def get_IP(lines_neut,lines_cat):
@@ -142,7 +171,7 @@ def get_EA(lines_neut,lines_an):
   neut_enrg = all_energies(lines_neut)
   A = []
   for enrg_item in range(0,len(an_enrg)):
-    ea = float(an_enrg[enrg_item])-float(an_enrg[enrg_item])
+    ea = float(neut_enrg[enrg_item])-float(an_enrg[enrg_item])
     A.append(ea)
   return A
 

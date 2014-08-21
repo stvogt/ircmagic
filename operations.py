@@ -123,6 +123,8 @@ def num_valence_orbs(atom_list):
       "16" : 6,
       "17" : 7,
       "18" : 8,
+      "19" : 1,
+      "20" : 2,
       }
   val_elec = 0
   for atom in atom_list:
